@@ -16,7 +16,7 @@ Powered by open source software.
 Importing logs in the analysis stack is equivalent to defining a docker volume and adding it to your services.
 
 Purplesec follows a strict directory structure:
- * ./docker folder, containing all , and referred to by several ansible roles
+ * ./docker folder, containing all docker compose bundles, and referred to by several ansible roles
  * ./ansible folder, containing playbooks and roles for deploying docker configurations in your environment
  * some bash scripts to bootstrap common scenarios
 
