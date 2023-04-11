@@ -1,0 +1,12 @@
+version: '2.2'
+
+# Security center
+services:
+  dwva:
+    image: vulnerables/web-dvwa
+    restart: always
+    container_name: dvwa
+    ports:
+      - "4444:80"
+    volumes:
+      - dvwa-logs:/var/log/apache2
