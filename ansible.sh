@@ -3,6 +3,7 @@
 # check imported roles
 ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
 
+bash setup-interface.sh
 # clear stale ssh pubkeys
 echo "[*] Clearing stale ssh pubkeys"
 rm -rf ansible/.ssh/*.pub
