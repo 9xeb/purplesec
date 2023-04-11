@@ -1,0 +1,15 @@
+version: '2.2'
+
+# Volumes only
+volumes:
+  # Network containers
+  zeek-logs:
+  zeek-spool:
+  suricata-logs:
+  # Analysis containers
+  rita-database:
+  crowdsec-database:
+  elasticsearch-database:
+  threatintel-database:
+  threatintel-logs:
+  autozed-lake:

@@ -1,0 +1,2 @@
+# filebeat to forward access.log logs
+# wireguard to access provider's elasticsearch instance (requires wireguard kernel module to be enabled before starting container. Easy to do with ansible)

@@ -1,0 +1,15 @@
+[submodule "ansible"]
+	path = ansible
+	url = git@github.com:9xeb/ansible.git
+[submodule "docker/nsm"]
+	path = docker/nsm
+	url = git@github.com:9xeb/nsm.git
+[submodule "docker/sigmalert"]
+	path = docker/sigmalert
+	url = git@github.com:9xeb/sigmalert.git
+[submodule "docker/purpleids"]
+	path = docker/purpleids
+	url = git@github.com:9xeb/purpleids.git
+[submodule "docker/netpot"]
+	path = docker/netpot
+	url = git@github.com:9xeb/netpot.git
