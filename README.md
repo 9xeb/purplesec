@@ -27,8 +27,9 @@ There will be a diagram here soon.
 
 ## Usage
 ```
-# Put your compose project in ./docker, then:
-bash link-files.sh
+# Put your compose project in ./docker, then perform setup:
+# Remember to set the name of the interface in your sniffer correctly
+bash setup.sh
 
 # Now set up your inventory following the given template:
 cp ansible/inventory.template ansible/.inventory 
@@ -42,9 +43,6 @@ mkdir ansible/.ssh
 cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
 
 # edit ansible/vars/main.yml and set the required volumes and parameters
-
-# set the name of the interface in your sniffer correctly
-bash setup-interface.sh
 
 # Now you can push your configurations wherever you want!
 bash ansible.sh ansible/push-compose.yml
