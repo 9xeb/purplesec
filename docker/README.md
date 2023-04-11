@@ -1,11 +1,11 @@
 # List
-- [FEATURED] network
+- [FEATURED] nsm
 	- integrated zeek and suricata stack that works out-of-the-box
 	- logs can be easily shared for inspection, across your infrastructure via docker volumes and sshnfs
 	- specify the interface to listen to
 	- typically you would want one of these sniffing a network tap at the frontier
 
-- [FEATURED] analysis 
+- [FEATURED] purpleids
 	- low footprint compared to fully fledged XDRs
 	- thorough analysis of a selected groups of logs:
 		- zeek logs (both current and rotated)
