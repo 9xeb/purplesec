@@ -22,7 +22,8 @@ Purplesec follows a strict directory structure:
 
 Refer to the corresponding subdirectories for more specific readme files.
 
-## HIGH LEVEL OVERVIEW OF HOW DOCKER AND ANSIBLE WORK TOGETHER FOR PURPLESEC
+## High level overview of how docker and ansible work together in purplesec
+There will be a diagram here soon.
 
 ## Usage
 ```
