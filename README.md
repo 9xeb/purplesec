@@ -4,7 +4,7 @@ It is my attempt to collect some of my other standalone repos into one comprehen
 Though most of the effort goes to the cyber defense part, some future components will include recon and stealth behavior to emulate attackers in realistic scenarios.
 Additionally, there will be configurations for setting up wireguard tunnels anywhere, multi-host docker volumes via SSH and NFS, automated backups using borg.
 
-The hilosophy behind purplesec follows these basic principles:
+The philosophy behind purplesec follows these basic principles:
   - low resource footprint (memory, I/O, cpu)
   - usability through simplicity (and visibility)
   - focus on the most likely attack vectors
