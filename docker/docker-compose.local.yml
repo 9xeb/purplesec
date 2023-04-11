@@ -13,3 +13,5 @@ volumes:
   threatintel-database:
   threatintel-logs:
   autozed-lake:
+  swag-logs:
+  rita-logs:

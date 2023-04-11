@@ -1,0 +1,83 @@
+version: '2.2'
+
+# Volumes only
+volumes:
+  # Network containers
+  zeek-logs:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/zeek-logs"
+  zeek-spool:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/zeek-spool"
+  suricata-logs:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/suricata-logs"
+
+
+  # Analysis containers
+  rita-database:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/rita-database"
+  crowdsec-database:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/crowdsec-database"
+  # Elasticsearch is very I/O heavy and its volume is not required elsewhere, better to keep it local
+  elasticsearch-database:
+#    driver: local
+#    driver_opts:
+#      type: nfs4
+#      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+#      device: ":/srv/swarm/docker/volumes/elasticsearch-database"
+  threatintel-database:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/threatintel-database"
+  threatintel-logs:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/threatintel-logs"
+  autozed-lake:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/autozed-lake"
+  rita-logs:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/rita-logs"
+
+  # services containers
+  dvwa-logs:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/dvwa-logs"
+  swag-logs:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/swag-logs"
