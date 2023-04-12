@@ -1,82 +1,100 @@
 # PurpleSec
-This is purplesec, a collection of dockerfiles, docker-compose configurations, docker swarm stacks, ansible roles and playbooks with practical security automation applications.
-It is my attempt to collect some of my other standalone repos into one comprehensive set of tools with a focus on automation.
+This is __PurpleSec__, a collection of dockerfiles, docker-compose configurations, ansible roles and playbooks with practical __security automation__ applications.
+It is an attempt to collect some of my other standalone repos into one comprehensive set of tools focused on automation.
 Though most of the effort goes to the cyber defense part, some future components will include recon and stealth behavior to emulate attackers in realistic scenarios.
-Additionally, there will be configurations for setting up wireguard tunnels anywhere, multi-host docker volumes via SSH and NFS, automated backups using borg.
 
 The philosophy behind purplesec follows these basic principles:
-  - low resource footprint (memory, I/O, cpu)
-  - usability through simplicity (and visibility)
-  - focus on the most likely attack vectors
+  - low resource footprint (memory, I/O, cpu);
+  - usability through simplicity;
+  - focus on the most likely attack vectors first.
 
-The ultimate goal is to provide a collection of modules that can be applied separately or together, on most environments, with minimal manual setup, that provide tangible results without spending hundreds of hours learning how to use that particular vendor's solution.
-Purplesec's capabilities sit between home firewalls and more sophisticated XDRs, moving homelabs and smaller organizations from zero to decent intrusion detection and response.
+The ultimate goal is to provide a collection of modules that can be applied to most environments, with minimal manual setup, that provide tangible results without spending hundreds of hours learning how to use that particular vendor's solution.
+
 Powered by open source software.
 
-Importing logs in the analysis stack is equivalent to defining a docker volume and adding it to your services.
+# Features
+Current bundles that support automated deployment include:
+ * a __network security monitor__ powered by Zeek and Suricata;
+ * __log analysis services__ with the following capabilities:
+   * spot __beacons__ in network traffic;
+   * detect the most common __probing__, __brute forcing__, __DoS__ and __exploitation__ attempts against web servers;
+   * highlight __observables__ of interest for __threat hunting__ purposes. These include IP addresses, domain names, fingerprints and URLs;
+ * a __Zed data lake__ accessible via Zui for threat hunting;
+ * a __vulnerable web app__ (DVWA) for testing the system's capabilities.
+
+I encourage you to take a look at my other repos that appear as submodules for purplesec.
+
+From the perspective of data flows, there are three distinct logical elements: __log producers__, __log collectors__ and __log consumers__. These three categories become more evident when orchestrating through ansible.
+
+Purplesec's capabilities sit between home firewalls and more sophisticated XDRs, driving homelabs and smaller organizations from zero to decent intrusion detection and response.
+
+## Some notes on log collection
+For log collection, a clever way of deploying docker volumes is used. After struggling with Elasticsearch for long I realized that for low-budget security use cases Elasticsearch is way too resource hungry compared to the actual benefits it provides. Therefore, I developed a heavily automated system for sharing __docker volumes across multiple hosts__ instead. By automated I mean it can be deployed at scale using ansible playbooks and roles.
+
+Here's how it works. At least one NFS server accepting requests from localhost only is setup. Docker hosts open SSH tunnels to NFS hosts so that they can access NFS exports through secure channels. Whenever required, some ansible roles make sure NFS hosts and docker hosts agree when mapping docker volume names to remote NFS exports.
+The result is effortless and transparent data sharing through SSH tunnels, between containers regardless of their physical location and the docker host they are running on, for both reading and writing data.
+
+In practice, importing or exporting logs across hosts becomes equivalent to simply defining a docker volume and mounting it inside the desired container, while SSH and NFS do their magic behind the scenes.
+
+# High level overview
+![Purplesec](./purplesec.png)
 
 Purplesec follows a strict directory structure:
  * ./docker folder, containing all docker compose bundles, and referred to by several ansible roles
  * ./ansible folder, containing playbooks and roles for deploying docker configurations in your environment
  * some bash scripts to bootstrap common scenarios
 
-Refer to the corresponding subdirectories for more specific readme files.
+Refer to subdirectories for more specific information.
 
-## High level overview of how docker and ansible work together in purplesec
-There will be a diagram here soon.
+Though the current setup is specific to security monitoring, some potential general applications are emerging from some of the ansible roles and playbooks I have been writing. By general applications I mean the same process that powers automation in purplesec can be applied to any docker-compose bundle one wishes to deploy across hosts. I will probably leverage them on a separate repo dedicated to docker orchestration soon.
+
 
 ## Usage
+
+Set the name of the interface of the host your NSM will run on:
 ```
-# Put your compose project in ./docker, then perform setup:
-# Remember to set the name of the interface in your sniffer correctly
-bash setup.sh
-
-# Now set up your inventory following the given template:
-cp ansible/inventory.template ansible/.inventory 
-
-# Place an ansible vault for credentials and other sensitive data (this in mandatory)
-ansible-vault create ansible/.vault
-
-# ssh at least once in all hosts to fill up your ~/.ssh/known_hosts
-# place known hosts file in ansible/.ssh/known_hosts so that hosts can open ssh tunnels to each others
-mkdir ansible/.ssh
-cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
-
-# edit ansible/vars/main.yml and set the required volumes and parameters
-
-# Now you can push your configurations wherever you want!
-bash ansible.sh ansible/push-compose.yml
-
-# check ./ansible for more playbooks
+$ bash setup.sh
 ```
+Now set up your inventory following the given template:
+```
+$ cp inventory.template ansible/.inventory 
+```
+Place an ansible vault for credentials and other sensitive data (this in highly encouraged):
+```
+$ EDITOR=your-favorite-editor ansible-vault create ansible/.vault
+```
+__SSH at least once in storage hosts to fill up your ~/.ssh/known_hosts__, then place the file in ansible/.ssh/known_hosts so that docker hosts can open ssh tunnels to storage hosts non-interactively and securely
+```
+$ mkdir ansible/.ssh
+$ cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
+```
+edit ansible/vars/main.yml and set the required volumes and parameters, according to the template
+```
+cp vars.yml.template ansible/vars/main.yml
+```
+Now you can push the whole ecosystem at once!
+```
+$ bash ansible.sh ansible/push-compose.yml
+```
+Check ./ansible for more playbooks.
 
-## Some tips for this specific setup
+
+# Some tips for this specific setup
 The current setup includes the 9xeb/purpleids, 9xeb/nsm and 9xeb/netpot compose configurations.
-Additionally, 9xeb/sigmalert is present but not used.
+Additionally, 9xeb/sigmalert is present but will not be used.
 
-[docker/analysis/rita/config.yaml]
-Edit 'Filtering: InternalSubnets' to add any additional IP range to treat as internal
-Edit 'Filtering: AlwaysInclude' to add any IP to exempt from internal filtering. Typically you should put your internal DNS servers here so that internal DNS queries are recorded
+Below you can find some tips to tailor your specific setup.
 
-[docker/nsm/zeek]
-Check zeek docs if you need to change the default list of networks to be considered as internal
 
-## Caveats
- * ZEEK_INTERFACE and SURICATA_INTERFACE must match the actual interface name of your sniffing host
- * Make sure all your hosts agree on their timezone to avoid unexpected delays when analysing logs. Stick to UTC as a global time
+In *docker/purpleids/rita/config.yaml*:
+ * Edit 'Filtering: InternalSubnets' to add any additional IP range to treat as internal;
+ * Edit 'Filtering: AlwaysInclude' to add any IP to exempt from internal filtering. Typically you should put your internal DNS servers here so that internal DNS queries are recorded.
 
-[Notes]
-- Apparently if filebeat is restarted and eve.json is big, something weird happens and suricata logs are not sent to elasticsearch
-	- possible mitigation: rotate eve.json with bash tools and see how suricata reacts (removing the file does not work, suricata stops writing to eve.json)
+In *docker/nsm/zeek*:
+ * Check zeek docs if you need to change the default list of networks to be considered as internal.
 
-### Future additions
-- Attack surface recon, sensible vulnerability assessment using bash pipeline, from org name to vulnerabilities, through asset discovery and recording
-- Remote security assessments via ssh
+# Future additions
+- Attack surface recon, automated red teaming with toolchains, from org name to vulnerabilities, through asset discovery and OSINT;
+- Remote security assessments via ssh.
 
-- zed query '' | crowdsec
-- warninglists + virustotal in threatintel
-- Let user declare policy for diamond2ban
-- Regular suricata-update in running suricata container
 
-#### Some notes
-- elasticlean container, simple python script for dropping documents in indexes according to timestamp or size policy
