@@ -10,7 +10,7 @@ The philosophy behind purplesec follows these basic principles:
 
 The ultimate goal is to provide a collection of modules that can be applied to most environments, with minimal manual setup, that provide tangible results without spending hundreds of hours learning how to use that particular vendor's solution.
 
-Powered by open source software.
+Powered by open source software. Currently tested on debian-like environments only.
 
 # Features
 Current bundles that support automated deployment include:
