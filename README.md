@@ -50,7 +50,7 @@ Refer to subdirectories for more specific information.
 Though the current setup is specific to security monitoring, some potential general applications are emerging from some of the ansible roles and playbooks I have been writing. By general applications I mean the same process that powers automation in purplesec can be applied to any docker-compose bundle one wishes to deploy across hosts. I will probably leverage them on a separate repo dedicated to docker orchestration soon.
 
 
-## Usage
+# Usage
 
 Set the name of the interface of the host your NSM will run on:
 ```
@@ -58,7 +58,7 @@ $ bash setup.sh
 ```
 Now set up your inventory following the given template:
 ```
-$ cp inventory.template ansible/.inventory 
+$ cp templates/inventory.template ansible/.inventory 
 ```
 Place an ansible vault for credentials and other sensitive data (this in highly encouraged):
 ```
@@ -71,7 +71,7 @@ $ cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
 ```
 edit ansible/vars/main.yml and set the required volumes and parameters, according to the template
 ```
-cp vars.yml.template ansible/vars/main.yml
+cp templates/vars.yml.template ansible/vars/main.yml
 ```
 Now you can push the whole ecosystem at once!
 ```
