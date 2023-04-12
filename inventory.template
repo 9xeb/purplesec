@@ -1,0 +1,19 @@
+[storageServers]
+# Currently only works with one. Multiple storage servers support will happen soon.
+storage.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
+
+
+[networkHosts]
+# Currently only works with one. Multiple sniffing hosts support will happen soon.
+nsm.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
+
+[analysisHosts]
+# Currently only works with one. Distributed analysis support will happen soon.
+purpleids.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
+
+[dockerHosts:children]
+# Leave these as they are unless you know what you are doing
+networkHosts
+analysisHosts
+storageServers
+
