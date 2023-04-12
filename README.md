@@ -28,6 +28,9 @@ From the perspective of data flows, there are three distinct logical elements: _
 
 Purplesec's capabilities sit between home firewalls and more sophisticated XDRs, driving homelabs and smaller organizations from zero to decent intrusion detection and response.
 
+# High level overview
+![Purplesec](./purplesec.png)
+
 ## Some notes on log collection
 For log collection, a clever way of deploying docker volumes is used. After struggling with Elasticsearch for long I realized that for low-budget security use cases Elasticsearch is way too resource hungry compared to the actual benefits it provides. Therefore, I developed a heavily automated system for sharing __docker volumes across multiple hosts__ instead. By automated I mean it can be deployed at scale using ansible playbooks and roles.
 
@@ -36,8 +39,6 @@ The result is effortless and transparent data sharing through SSH tunnels, betwe
 
 In practice, importing or exporting logs across hosts becomes equivalent to simply defining a docker volume and mounting it inside the desired container, while SSH and NFS do their magic behind the scenes.
 
-# High level overview
-![Purplesec](./purplesec.png)
 
 Purplesec follows a strict directory structure:
  * ./docker folder, containing all docker compose bundles, and referred to by several ansible roles
