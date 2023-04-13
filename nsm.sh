@@ -19,5 +19,5 @@
 
 # TODO: run with ansible playbook if host is specified
 bash ./setup-interface.sh && \
-sudo docker-compose -f docker/docker-compose.local.yml -f docker/nsm/docker-compose.yml --env-file docker/nsm/.env $@
+sudo docker-compose -f docker/docker-compose.local.yml -f docker/nsm/docker-compose.local.yml --env-file docker/nsm/.env $@
 #cd ..
