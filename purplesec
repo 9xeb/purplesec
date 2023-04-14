@@ -1,0 +1,82 @@
+#!/bin/bash
+
+function volumes_helper {
+if ! file -E .volumes > /dev/null; then touch .volumes; fi && \
+case $1 in
+  ls)
+    cat .volumes
+    ;;
+  add)
+    if ! grep ${2} .volumes > /dev/null; then echo ${2} >> .volumes; fi && echo "[*] Added volume "${volume}
+    ;;
+  rm)
+    sed -i 's/'${2}'//g' .volumes && echo "[*] Removed volume "${volume}
+    ;;
+  edit)
+    nano .volumes
+    ;;
+  *)
+    echo "[*] Unknown argument "${1}
+    exit 1
+    ;;
+esac
+}
+
+function refresh_volumes {
+  mv docker/docker-compose-ansible.yml docker/docker-compose-ansible.yml.old && \
+  cat >> docker/docker-compose-ansible.yml << EOF
+version: '2.2'
+# Volumes only
+volumes:
+EOF
+  cp templates/vars.yml.template ansible/vars/main.yml && \
+  echo "docker_volumes:" >> ansible/vars/main.yml
+  for volume in $(cat .volumes); do
+    cat >> docker/docker-compose-ansible.yml<< EOF
+  ${volume}:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+      device: ":/srv/swarm/docker/volumes/${volume}"
+EOF
+    cat >> ansible/vars/main.yml<< EOF
+  - ${volume}
+EOF
+  done
+}
+
+case $1 in
+  volume)
+    volumes_helper "${@:2}"
+    ;;
+  push)
+    bash setup.sh && \
+    refresh_volumes && \
+    echo "[*] Clearing stale ssh pubkeys" && \
+    rm -rf ansible/.ssh/*.pub && \
+    ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
+    ;;
+  stats)
+    echo "[!] Not implemented yet"
+    ;;
+  inventory)
+    if ! file -E ansible/.inventory 2>&1; then
+      cp templates/inventory.template ansible/.inventory
+    fi && nano ansible/.inventory
+    ;;
+  vault)
+    ansible-vault ${2} ansible/.vault
+    ;;
+  vars)
+    nano templates/vars.yml.template
+    ;;
+  preview)
+    echo "[*] Variables" && cat ansible/vars/main.yml && \
+    echo "[*] Inventory" && cat ansible/.inventory
+    ;;
+  *)
+    echo "[*] Unknown argument "${1}
+    exit 1
+    ;;
+esac
