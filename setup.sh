@@ -10,8 +10,10 @@ ln -s ../../../docker ansible/roles/9xeb.push-volumes/files
 echo "[*] Done"
 
 #!/bin/bash
-read -p "Enter network interface of your NSM: " interface
-sed -i 's/INTERFACE=.*/INTERFACE='${interface}'/g' docker/nsm/.env
+read -p "Enter network interface of your NSM > " interface
+#sed -i 's/INTERFACE=.*/INTERFACE='${interface}'/g' docker/nsm/.env
+sed -i 's/ZEEK_INTERFACE=.*/ZEEK_INTERFACE='${interface}'/g' docker/nsm/.env
+sed -i 's/SURICATA_INTERFACE=.*/SURICATA_INTERFACE='${interface}'/g' docker/nsm/.env
 
 file -E docker/purpleids/.env || \
 (cat << EOF
