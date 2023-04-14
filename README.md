@@ -51,41 +51,45 @@ Though the current setup is specific to security monitoring, some potential gene
 
 
 # Usage
-
-Set the name of the interface of the host your NSM will run on:
-```
-$ bash setup.sh
-```
-Now set up your inventory following the given template:
-```
-$ cp templates/inventory.template ansible/.inventory 
-```
-Place an ansible vault for credentials and other sensitive data (this in highly encouraged):
-```
-$ EDITOR=your-favorite-editor ansible-vault create ansible/.vault
-```
-__SSH at least once in storage hosts to fill up your ~/.ssh/known_hosts__, then place the file in ansible/.ssh/known_hosts so that docker hosts can open ssh tunnels to storage hosts non-interactively and securely
+First of all, __SSH at least once in storage hosts to fill up your ~/.ssh/known_hosts__, then place the file in ansible/.ssh/known_hosts so that docker hosts can open ssh tunnels to storage hosts non-interactively and securely.
 ```
 $ mkdir ansible/.ssh
 $ cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
 ```
-edit ansible/vars/main.yml and set the required volumes and parameters, according to the template
-```
-cp templates/vars.yml.template ansible/vars/main.yml
-```
-Now you can push the whole ecosystem at once!
-```
-$ bash ansible.sh ansible/push-compose.yml
-```
-Check ./ansible for more playbooks.
 
+I wrote a __helper script__ (requires nano) to simplify both configuration and deployment. This is especially useful for hiding the inner workings of multi host volume management, which spans across multiple configuration files the average user might lose track of.
 
-# Some tips for this specific setup
-The current setup includes the 9xeb/purpleids, 9xeb/nsm and 9xeb/netpot compose configurations.
-Additionally, 9xeb/sigmalert is present but will not be used.
+Here is the syntax:
+```
+purplesec push | volume {ls|add|rm|edit} | inventory | vault {create|edit|rekey}
+```
+Add multi host docker volume:
+```
+$ ./purplesec volume add VOLUME_NAME
+```
+Remove multi host docker volume (does not delete corresponding folder in NFS just in case you made a mistake):
+```
+$ ./purplesec volume rm VOLUME_NAME
+```
+Edit inventory file (a template is provided so you can configure credentials in an ansible vault):
+```
+$ ./purplesec inventory
+```
+Edit ansible vault:
+```
+$ ./purplesec vault {create | edit | rekey}
+```
+Tailor variables to suit your specific docker compose bundles' requirements:
+```
+$ ./purplesec vars
+```
+Push configuration (will setup everything, including NFS backend and all compose bundles):
+```
+$ ./purplesec push
+```
 
-Below you can find some tips to tailor your specific setup.
-
+# Managing internal networks
+Below you can find some additional tips to tailor your specific setup.
 
 In *docker/purpleids/rita/config.yaml*:
  * Edit 'Filtering: InternalSubnets' to add any additional IP range to treat as internal;
@@ -93,6 +97,21 @@ In *docker/purpleids/rita/config.yaml*:
 
 In *docker/nsm/zeek*:
  * Check zeek docs if you need to change the default list of networks to be considered as internal.
+
+# Some tips and observations
+The current setup includes the 9xeb/purpleids, 9xeb/nsm and 9xeb/netpot compose configurations.
+Additionally, 9xeb/sigmalert is present but will not be used.
+
+__Though this project was meant for security purposes, it is rapidly becoming a generic orchestrator for multi host docker with multi host volumes. Since multi host volumes cannot be configured easily in docker and docker swarm, you might want to pull this repo and use it as a launchpad for your distributed docker-based applications.__
+
+Hence, if you wish, you can add your own compose folder in ./docker, then edit your multi host volumes with:
+```
+$ ./purplesec volume edit
+```
+and add a reference to your project to the *requested_stacks* variable:
+```
+$ ./purplesec vars
+```
 
 # Future additions
 - Attack surface recon, automated red teaming with toolchains, from org name to vulnerabilities, through asset discovery and OSINT;
