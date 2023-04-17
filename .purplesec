@@ -1,0 +1,25 @@
+{
+  "volumes": [
+    "zeek-logs",
+    "zeek-spool",
+    "suricata-logs",
+    "rita-database",
+    "elasticsearch-database",
+    "threatintel-database",
+    "threatintel-logs",
+    "autozed-lake",
+    "rita-logs",
+    "dvwa-logs",
+    "swag-logs",
+    "crowdsec-database",
+    "test-vol"
+  ],
+
+  "logs": [
+    { 
+      "volume": "swag-logs",
+      "files": ["nginx/*.log"],
+      "type": "nginx"
+    }
+  ]
+}

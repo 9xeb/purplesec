@@ -1,5 +1,8 @@
 #!/bin/bash
 
+MAIN_JSON=.purplesec
+CROWDSEC_ACQUIS_FILE=docker/purpleids/crowdsec/acquis.yaml
+
 function setup_helper {
 # link project files to 9xeb.push-compose ansible role
 echo "[*] Linking your ./docker to ansible roles that require it"
@@ -24,21 +27,19 @@ EOF
  ) > docker/purpleids/.env
 }
 
-
-function volumes_helper {
-if ! file -E .volumes > /dev/null; then touch .volumes; fi && \
+function logs_helper {
+if ! file -E ${MAIN_JSON} > /dev/null; then touch ${MAIN_JSON}; fi && \
 case $1 in
   ls)
-    cat .volumes
-    ;;
-  add)
-    if ! grep ${2} .volumes > /dev/null; then echo ${2} >> .volumes; fi && echo "[*] Added volume "${volume}
-    ;;
-  rm)
-    sed -i 's/'${2}'//g' .volumes && echo "[*] Removed volume "${volume}
+    cat ${MAIN_JSON} | jq -c '.logs[]'
     ;;
   edit)
-    nano .volumes
+    nano ${MAIN_JSON}
+    ;;
+  explore)
+    #cat ${MAIN_JSON} | jq '.volumes[]' | cut -d'"' -f2 | grep ^${2}$ && \
+    #sudo docker run --rm -it -v ${2}:/${2} debian bash || \
+    #echo "[*] Volume not found";
     ;;
   *)
     echo "[*] Unknown argument "${1}
@@ -47,6 +48,32 @@ case $1 in
 esac
 }
 
+
+function volumes_helper {
+if ! file -E ${MAIN_JSON} > /dev/null; then touch ${MAIN_JSON}; fi && \
+case $1 in
+  ls)
+    cat ${MAIN_JSON} | jq -c '.volumes[]'
+    ;;
+  #add)
+    #if ! grep ${2} .volumes > /dev/null; then echo ${2} >> .volumes; fi && echo "[*] Added volume "${volume}
+    #;;
+  #rm)
+    #sed -i 's/'${2}'//g' .volumes && echo "[*] Removed volume "${volume}
+    #;;
+  edit)
+    nano ${MAIN_JSON}
+    ;;
+  *)
+    echo "[*] Unknown argument "${1}
+    exit 1
+    ;;
+esac
+}
+
+# Update resources regarding volumes, making sure docker and ansible agree:
+#  - volumes definitions in a docker compose file
+#  - ansible variables referring to volumes for NFS servers
 function refresh_volumes {
   mv docker/docker-compose-ansible.yml docker/docker-compose-ansible.yml.old && \
   cat >> docker/docker-compose-ansible.yml << EOF
@@ -56,7 +83,8 @@ volumes:
 EOF
   cp templates/vars.yml.template ansible/vars/main.yml && \
   echo "docker_volumes:" >> ansible/vars/main.yml
-  for volume in $(cat .volumes); do
+  #crowdsec_mountlist=""
+  for volume in $(cat ${MAIN_JSON} | jq '.volumes[]' | cut -d'"' -f 2); do
     cat >> docker/docker-compose-ansible.yml<< EOF
   ${volume}:
     driver: local
@@ -71,6 +99,45 @@ EOF
   done
 }
 
+# Update resources that refer to logs:
+#  - acquis.yaml file for crowdsec
+#  - mountpoints of crowdsec service in docker compose
+function refresh_logs {
+  # crowdsec
+  crowdsec_mountlist=""
+  rm ${CROWDSEC_ACQUIS_FILE}
+  for entry in $(cat ${MAIN_JSON} | jq -c '.logs[]');
+  do
+    cat >> ${CROWDSEC_ACQUIS_FILE} << EOF
+---
+filenames:
+EOF
+  volume=$(echo ${entry} | jq -c '.volume' | cut -d'"' -f 2)
+  crowdsec_mountlist=${crowdsec_mountlist}'"'${volume}':/'${volume}':ro",'
+  filelist=""
+  for filename in $(echo ${entry} | jq -c '.files[]' | cut -d'"' -f 2);
+  do
+    cat >> ${CROWDSEC_ACQUIS_FILE} << EOF
+  - ${volume}/${filename}
+EOF
+  filelist=${filelist}'"${filename}:/${filename}:ro",'
+  done
+  cat >> ${CROWDSEC_ACQUIS_FILE} << EOF
+labels:
+  type: $(echo ${entry} | jq -c '.type' | cut -d'"' -f 2)
+EOF
+  done
+  # add default database volume (soon this will disappear in favor of postgres)
+  crowdsec_mountlist=${crowdsec_mountlist}'"crowdsec-database:/var/lib/crowdsec/data/",'
+  echo ${crowdsec_mountlist}
+  PATH=$PATH:$GOPATH:~/go/bin
+  cp docker/purpleids/docker-compose-ansible-base.yml docker/purpleids/docker-compose-ansible.yml && \
+  yq -i '.services.crowdsec.volumes = ['${crowdsec_mountlist::-1}']' docker/purpleids/docker-compose-ansible.yml
+  #yq e '. as $item ireduce ({}; . * $item )' docker/purpleids/docker-compose-ansible-base.yml templates/crowdsec.compose.template
+  #> docker/purpleids/docker-compose-ansible.yml
+  # templates/crowdsec.compose.template
+}
+
 case $1 in
   volume)
     volumes_helper "${@:2}"
@@ -78,9 +145,10 @@ case $1 in
   push)
     setup_helper && \
     refresh_volumes && \
+    refresh_logs && \
     echo "[*] Clearing stale ssh pubkeys" && \
-    rm -rf ansible/.ssh/*.pub && \
-    ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
+    rm -rf ansible/.ssh/*.pub #&& \
+    #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
     ;;
   stats)
     echo "[!] Not implemented yet"
@@ -96,9 +164,11 @@ case $1 in
   vars)
     nano templates/vars.yml.template
     ;;
-  preview)
-    echo "[*] Variables" && cat ansible/vars/main.yml && \
-    echo "[*] Inventory" && cat ansible/.inventory
+  logs)
+    logs_helper "${@:2}"
+    # .logs is a JSON that contains volume_name/logfile.log and log types in those volumes
+    # auto add volume to acquis.yml
+    # auto add volume to crowdsec service in compose 
     ;;
   *)
     echo "[*] Unknown argument "${1}
