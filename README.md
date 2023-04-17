@@ -116,5 +116,6 @@ $ ./purplesec vars
 # Future additions
 - Attack surface recon, automated red teaming with toolchains, from org name to vulnerabilities, through asset discovery and OSINT;
 - Remote security assessments via ssh.
+- Docker image to tail -F log files from local filesystem to remote volume (basically a replacement for filebeat)
 
 
