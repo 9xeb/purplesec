@@ -1,3 +1,5 @@
+project_name: purplesec
+
 # This is the directory in your NFS host where all data will actually be stored
 # keep this in mind when you declare your volumes
 export_dir: /srv/swarm/docker/volumes
@@ -13,9 +15,9 @@ ssh_tunneling_local_port: 12345
 # you can set target group from inventory, compose stack name from ./docker and tell ansible if you want that particular compose stack to be present or not
 # this setup works fine for one sniffer, one analysis host and one vulnerable app for testing
 requested_stacks:
-  - { project_name: purpleids, stack_name: nsm, target: 'networkHosts', status: present }
-  - { project_name: purpleids, stack_name: purpleids, target: 'analysisHosts', status: present }
-  - { project_name: purpleids, stack_name: dvwa, target: 'analysisHosts', status: present }
+  - { stack_name: nsm, target: 'networkHosts', status: present }
+  - { stack_name: purpleids, target: 'analysisHosts', status: present }
+  - { stack_name: dvwa, target: 'analysisHosts', status: present }
 
 # This is a list of volumes you want the NFS host to expect
 # Note that if you declare additional volumes in your compose stacks but do not instruct your NFS host here, the ssh+nfs magic won't work
