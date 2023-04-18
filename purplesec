@@ -11,15 +11,18 @@ ln -s ../../../docker ansible/roles/9xeb.push-compose/files
 
 unlink ansible/roles/9xeb.push-volumes/files && \
 ln -s ../../../docker ansible/roles/9xeb.push-volumes/files
-echo "[*] Done"
+#echo "[*] Done"
 
 #!/bin/bash
-read -p "Enter network interface of your NSM > " interface
+if ! file -E ${MAIN_JSON} > /dev/null; then echo "[!] "${MAIN_JSON}" does not exist." && exit 1; fi
+interface=$(cat ${MAIN_JSON} | jq '.nsm_interface' | cut -d'"' -f 2)
+echo "[*] NSM interface is "${interface}
+#read -p "Enter network interface of your NSM > " interface
 #sed -i 's/INTERFACE=.*/INTERFACE='${interface}'/g' docker/nsm/.env
 sed -i 's/ZEEK_INTERFACE=.*/ZEEK_INTERFACE='${interface}'/g' docker/nsm/.env
 sed -i 's/SURICATA_INTERFACE=.*/SURICATA_INTERFACE='${interface}'/g' docker/nsm/.env
 
-file -E docker/purpleids/.env || \
+file -E docker/purpleids/.env > /dev/null || \
 (cat << EOF
 DB_USER=$(cat /proc/sys/kernel/random/uuid)
 DB_PASSWORD=$(cat /proc/sys/kernel/random/uuid)
@@ -129,25 +132,24 @@ EOF
   done
   # add default database volume (soon this will disappear in favor of postgres)
   crowdsec_mountlist=${crowdsec_mountlist}'"crowdsec-database:/var/lib/crowdsec/data/",'
-  echo ${crowdsec_mountlist}
+  #echo ${crowdsec_mountlist}
   PATH=$PATH:$GOPATH:~/go/bin
   cp docker/purpleids/docker-compose-ansible-base.yml docker/purpleids/docker-compose-ansible.yml && \
   yq -i '.services.crowdsec.volumes = ['${crowdsec_mountlist::-1}']' docker/purpleids/docker-compose-ansible.yml
-  #yq e '. as $item ireduce ({}; . * $item )' docker/purpleids/docker-compose-ansible-base.yml templates/crowdsec.compose.template
-  #> docker/purpleids/docker-compose-ansible.yml
-  # templates/crowdsec.compose.template
 }
 
 case $1 in
-  volume)
-    volumes_helper "${@:2}"
+  volumes)
+    nano ${MAIN_JSON}
+    #volumes_helper "${@:2}"
     ;;
   push)
     setup_helper && \
     refresh_volumes && \
     refresh_logs && \
     echo "[*] Clearing stale ssh pubkeys" && \
-    rm -rf ansible/.ssh/*.pub #&& \
+    rm -rf ansible/.ssh/*.pub && \
+    ansible-playbook -vv -i ansible/.inventory -b ansible/push-${2}.yml -e@ansible/.vault --ask-vault-pass
     #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
     ;;
   stats)
@@ -165,10 +167,11 @@ case $1 in
     nano templates/vars.yml.template
     ;;
   logs)
-    logs_helper "${@:2}"
+    nano ${MAIN_JSON}
+    #logs_helper "${@:2}"
     # .logs is a JSON that contains volume_name/logfile.log and log types in those volumes
     # auto add volume to acquis.yml
-    # auto add volume to crowdsec service in compose 
+    # auto add volume to crowdsec service in compose
     ;;
   *)
     echo "[*] Unknown argument "${1}

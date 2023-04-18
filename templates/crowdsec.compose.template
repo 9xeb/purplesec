@@ -1,0 +1,5 @@
+services:
+  crowdsec:
+    volumes:
+      - volume-name:/volume-name:ro
+      - swag-logs:/swag-logs:ro
