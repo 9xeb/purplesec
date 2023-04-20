@@ -75,7 +75,7 @@ Edit volumes (does not touch corresponding folder in NFS just in case you made a
 ```
 $ ./purplesec volumes
 ```
-Edit logs sources for analyzers to read accordingly:
+Edit logs sources for analyzers to read accordingly (currently only Crowdsec):
 ```
 $ ./purplesec logs
 ```
