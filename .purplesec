@@ -1,5 +1,6 @@
 {
-  "nsm_interface": "eth1",
+  "nsm_interface": "enp1s0",
+
   "volumes": [
     "zeek-logs",
     "zeek-spool",
@@ -12,9 +13,7 @@
     "rita-logs",
     "dvwa-logs",
     "swag-logs",
-    "crowdsec-database",
-    "test-vol",
-    "a-new-volume"
+    "crowdsec-database"
   ],
 
   "logs": [
