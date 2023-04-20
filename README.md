@@ -59,18 +59,6 @@ $ cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
 
 I wrote a __helper script__ (requires nano) to simplify both configuration and deployment. This is especially useful for hiding the inner workings of multi host volume management, which spans across multiple configuration files the average user might lose track of.
 
-Here is the syntax:
-```
-purplesec push | volume {ls|add|rm|edit} | inventory | vault {create|edit|rekey}
-```
-Add multi host docker volume:
-```
-$ ./purplesec volume add VOLUME_NAME
-```
-Remove multi host docker volume (does not delete corresponding folder in NFS just in case you made a mistake):
-```
-$ ./purplesec volume rm VOLUME_NAME
-```
 Edit inventory file (a template is provided so you can configure credentials in an ansible vault):
 ```
 $ ./purplesec inventory
@@ -83,9 +71,17 @@ Tailor variables to suit your specific docker compose bundles' requirements:
 ```
 $ ./purplesec vars
 ```
+Edit volumes (does not touch corresponding folder in NFS just in case you made a mistake):
+```
+$ ./purplesec volumes
+```
+Edit logs sources for analyzers to read accordingly:
+```
+$ ./purplesec logs
+```
 Push configuration (will setup everything, including NFS backend and all compose bundles):
 ```
-$ ./purplesec push
+$ ./purplesec push {volumes | compose}
 ```
 
 # Managing internal networks
