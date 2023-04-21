@@ -3,6 +3,8 @@ This is __PurpleSec__, a collection of dockerfiles, docker-compose configuration
 It is an attempt to collect some of my other standalone repos into one comprehensive set of tools focused on automation.
 Though most of the effort goes to the cyber defense part, some future components will include recon and stealth behavior to emulate attackers in realistic scenarios.
 
+Additionally, it can be used as a minimal orchestrator for pushing compose configurations to docker clusters.
+
 The philosophy behind purplesec follows these basic principles:
   - low resource footprint (memory, I/O, cpu);
   - usability through simplicity;
