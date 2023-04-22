@@ -73,7 +73,7 @@ Tailor variables to suit your specific docker compose bundles' requirements:
 ```
 $ ./purplesec vars
 ```
-Edit volumes (does not touch corresponding folder in NFS just in case you made a mistake):
+Edit volumes (does not alter folders in NFS just in case you made a mistake):
 ```
 $ ./purplesec volumes
 ```
