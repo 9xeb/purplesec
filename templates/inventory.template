@@ -11,6 +11,12 @@ nsm.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
 # Currently only works with one. Distributed analysis support will happen soon.
 purpleids.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
 
+[servicesHosts]
+# Place your other docker hosts here, or create your own group. What actually matters is the requested_stacks variable.
+
+[backupHosts]
+# Currently only works with one. If more are set the last will override the others in client's configurations. This means clients will only backup to the last declared backup host.
+
 [dockerHosts:children]
 # Leave these as they are unless you know what you are doing
 networkHosts

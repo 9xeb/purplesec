@@ -15,9 +15,14 @@ ssh_tunneling_local_port: 12345
 # you can set target group from inventory, compose stack name from ./docker and tell ansible if you want that particular compose stack to be present or not
 # this setup works fine for one sniffer, one analysis host and one vulnerable app for testing
 requested_stacks:
-  - { stack_name: nsm, target: 'networkHosts', status: absent }
-  - { stack_name: purpleids, target: 'analysisHosts', status: absent }
-  - { stack_name: dvwa, target: 'analysisHosts', status: absent }
+  - { stack_name: nsm, target: 'networkHosts', status: present }
+  - { stack_name: purpleids, target: 'analysisHosts', status: present }
+  - { stack_name: dvwa, target: 'analysisHosts', status: present }
+  - { stack_name: docker-bundles/services, target: 'servicesHosts', status: present }
+
+requested_backups:
+  - { repo_password: "{{ vault_backup_password_0 }}", source_directories: ['/path/to/one', '/path/to/two'], target: 'dockerHosts' }
+#  - { repo_password: "{{ vault_backup_password_0 }}", source_directories: ['
 
 # This is a list of volumes you want the NFS host to expect
 # Note that if you declare additional volumes in your compose stacks but do not instruct your NFS host here, the ssh+nfs magic won't work
