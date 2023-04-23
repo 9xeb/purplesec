@@ -149,7 +149,7 @@ case $1 in
     refresh_logs && \
     echo "[*] Clearing stale ssh pubkeys" && \
     rm -rf ansible/.ssh/*.pub && \
-    ansible-playbook -vv -i ansible/.inventory -b ansible/push-${2}.yml -e@ansible/.vault --ask-vault-pass
+    ansible-playbook -vv -i ansible/.inventory -b ansible/${2}.yml -e@ansible/.vault --ask-vault-pass
     #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
     ;;
   stats)
