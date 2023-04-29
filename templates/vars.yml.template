@@ -13,15 +13,19 @@ ssh_tunneling_local_port: 12345
 
 # this is where some pretty cool automations emerge
 # you can set target group from inventory, compose stack name from ./docker and tell ansible if you want that particular compose stack to be present or not
-# this setup works fine for one sniffer, one analysis host and one vulnerable app for testing
-requested_stacks:
-  - { stack_name: nsm, target: 'networkHosts', status: present }
-  - { stack_name: purpleids, target: 'analysisHosts', status: present }
-  - { stack_name: dvwa, target: 'analysisHosts', status: present }
-  - { stack_name: docker-bundles/services, target: 'servicesHosts', status: present }
+# dir -> subdir of ./docker containing your app
+# conf -> which compose files, relative to ./docker, you want to run for the stack
+# env -> one env file to load, relative to ./docker
+stacks:
+  - { dir: nsm, target: 'networkHosts', status: present, conf: [docker-compose-ansible.yml, nsm/docker-compose-ansible.yml], env: nsm/.env, backup: no, swarm: no }
+  - { dir: purpleids, target: 'analysisHosts', status: present, conf: [docker-compose-ansible.yml, purpleids/docker-compose-ansible.yml], env: purpleids/.env, backup: no, swarm: yes }
+  - { dir: dvwa, target: 'analysisHosts', status: present, conf: [docker-compose-ansible.yml, dvwa/docker-compose-ansible.yml], env: dvwa/.env, backup: no, swarm: yes }
+  - { dir: docker-bundles/services, target: 'storageHosts', conf: [docker-compose-ansible.yml, docker-bundles/services/docker-compose-ansible.yml], env: docker-bundles/services/.env, backup: no, swarm: yes }
 
 requested_backups:
-  - { repo_password: "{{ vault_backup_password_0 }}", source_directories: ['/path/to/one', '/path/to/two'], target: 'dockerHosts' }
+#  - { repo_password: "{{ vault_backup_password_0 }}", source_directories: ['/path/to/one', '/path/to/two'], target: 'dockerHosts' }
+   - { repo_name: "swarm", repo_password: "{{ vault_backup_swarm_password }}", source_directories: ['/srv/swarm/to_backup', '/srv/swarm/docker/volumes'], target: 'storageServers' }
+#   - { repo_name: "dipreistic", repo_password: "{{ vault_backup_dipreistic_password }}", source_directories: ['/home/zelevas/Games/dipre"], target: 'localHost' }
 #  - { repo_password: "{{ vault_backup_password_0 }}", source_directories: ['
 
 # This is a list of volumes you want the NFS host to expect
