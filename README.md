@@ -1,20 +1,25 @@
 # PurpleSec
-This is __PurpleSec__, a collection of dockerfiles, docker-compose configurations, ansible roles and playbooks with practical __security automation__ applications.
-It is an attempt to collect some of my other standalone repos into one comprehensive set of tools focused on automation.
-Though most of the effort goes to the cyber defense part, some future components will include recon and stealth behavior to emulate attackers in realistic scenarios.
+This is __PurpleSec__, a collection of dockerfiles, docker-compose configurations, ansible roles and playbooks with practical __automation__ applications.
+It is an attempt to collect some of my other standalone repos into one comprehensive set of tools for easier deployment in my homelab.
 
-Additionally, it can be used as a minimal orchestrator for pushing compose configurations to docker clusters.
+Originally, PurpleSec used to be a collection of defensive cybersecurity tools that looked at network traffic and application logs for intrusion detection purposes.
 
-The philosophy behind purplesec follows these basic principles:
+Nowadays, through PurpleSec, you can also remotely manage Docker Compose configurations in multi-host environments, choose where each stack goes to, and do so from the same place. This makes PurpleSec a sort of minimalistic orchestrator with ingrained intrusion detection bundles.
+
+Planned future components will include automated recon and stealth behavior for performing adversary emulation against the multi-host environment itself and boost security even further.
+
+
+
+Powered by open source software. Currently tested on debian-like environments only.
+
+# Security bundles
+The goal here is to provide bundles that can be applied to most environments, with minimal manual setup, that provide tangible results without spending hundreds of hours learning how to use that particular vendor's solution.
+
+The philosophy behind the available security bundles follows these basic principles:
   - low resource footprint (memory, I/O, cpu);
   - usability through simplicity;
   - focus on the most likely attack vectors first.
 
-The ultimate goal is to provide a collection of modules that can be applied to most environments, with minimal manual setup, that provide tangible results without spending hundreds of hours learning how to use that particular vendor's solution.
-
-Powered by open source software. Currently tested on debian-like environments only.
-
-# Features
 Current bundles that support automated deployment include:
  * a __network security monitor__ powered by Zeek and Suricata;
  * __log analysis services__ with the following capabilities:
@@ -28,15 +33,15 @@ I encourage you to take a look at my other repos that appear as submodules for p
 
 From the perspective of data flows, there are three distinct logical elements: __log producers__, __log collectors__ and __log consumers__. These three categories become more evident when orchestrating through ansible.
 
-Purplesec's capabilities sit between home firewalls and more sophisticated XDRs, driving homelabs and smaller organizations from zero to decent intrusion detection and response.
+In terms of effectiveness, PurpleSec's security bundles stand between home firewalls and more sophisticated XDRs, driving homelabs and other small networks from zero to decent intrusion detection and response.
 
-# High level overview
+## High level overview
 ![Purplesec](./purplesec.png)
 
-## Some notes on log collection
-For log collection, a clever way of deploying docker volumes is used. After struggling with Elasticsearch for long I realized that for low-budget security use cases Elasticsearch is way too resource hungry compared to the actual benefits it provides. Therefore, I developed a heavily automated system for sharing __docker volumes across multiple hosts__ instead. By automated I mean it can be deployed at scale using ansible playbooks and roles.
+## How multi-host stateful data, including log collection, is achieved
+For log collection, a clever way of deploying docker volumes is used. After struggling with Elasticsearch for long I realized that for low-budget security use cases Elasticsearch is way too resource hungry compared to the actual benefits it provides. Therefore, I developed a system for sharing __docker volumes across multiple hosts__ instead, powered by Ansible roles and playbooks.
 
-Here's how it works. At least one NFS server accepting requests from localhost only is setup. Docker hosts open SSH tunnels to NFS hosts so that they can access NFS exports through secure channels. Whenever required, some ansible roles make sure NFS hosts and docker hosts agree when mapping docker volume names to remote NFS exports.
+Here's how it works briefly. At least one NFS server accepting requests from localhost only is setup. Docker hosts open SSH tunnels to NFS hosts so that they can access NFS exports through secure channels. Whenever required, some ansible roles make sure NFS hosts and docker hosts agree when mapping docker volume names to remote NFS exports.
 The result is effortless and transparent data sharing through SSH tunnels, between containers regardless of their physical location and the docker host they are running on, for both reading and writing data.
 
 In practice, importing or exporting logs across hosts becomes equivalent to simply defining a docker volume and mounting it inside the desired container, while SSH and NFS do their magic behind the scenes.
@@ -51,33 +56,61 @@ Refer to subdirectories for more specific information.
 
 Though the current setup is specific to security monitoring, some potential general applications are emerging from some of the ansible roles and playbooks I have been writing. By general applications I mean the same process that powers automation in purplesec can be applied to any docker-compose bundle one wishes to deploy across hosts. I will probably leverage them on a separate repo dedicated to docker orchestration soon.
 
+# Other bundles
+__Though this project was originally meant for security purposes only, it is rapidly becoming a generic orchestrator for multi host docker with multi host volumes. Since multi host volumes cannot be configured easily in docker and docker swarm, you might want to pull this repo and use it as a launchpad for your distributed docker-based applications.__
+
+Hence, if you wish, you can add your own project's subdir in ./docker, and then operate your multi-host environment using the available helper scripts.
 
 # Usage
-First of all, __SSH at least once in storage hosts to fill up your ~/.ssh/known_hosts__, then place the file in ansible/.ssh/known_hosts so that docker hosts can open ssh tunnels to storage hosts non-interactively and securely.
+First of all, __SSH at least once in storage hosts to fill up your ~/.ssh/known_hosts__, then place the file in ansible/.ssh/known_hosts. Since some hosts require to set up some SSH tunnels to other hosts in order to work with multi-host volumes, and they must to do so non-interactively and securely, they must also 'know' each other beforehand:
 ```
 $ mkdir ansible/.ssh
 $ cp ~/.ssh/known_hosts ansible/.ssh/known_hosts
 ```
 
-I wrote a __helper script__ (requires nano) to simplify both configuration and deployment. This is especially useful for hiding the inner workings of multi host volume management, which spans across multiple configuration files the average user might lose track of.
+I wrote a __helper script__ (requires nano) to simplify both configuration and deployment. This is especially useful for hiding the inner workings of multi host volume management, which spans across multiple configuration files the average user should not keep track of. The script is simply called 'purplesec'.
 
-Edit inventory file (a template is provided so you can configure credentials in an ansible vault):
+Edit your inventory file (a template is provided so you can configure credentials in an ansible vault):
 ```
 $ ./purplesec inventory
 ```
-Edit ansible vault:
+Edit Ansible vault:
 ```
 $ ./purplesec vault {create | edit | rekey}
 ```
-Tailor variables to suit your specific docker compose bundles' requirements:
+Tailor variables to suit your specific environment:
 ```
 $ ./purplesec vars
 ```
-Edit volumes (does not alter folders in NFS just in case you made a mistake):
+Example stack declaration in vars:
 ```
-$ ./purplesec volumes
+stacks:
+  - { 
+      name: nsm, 
+      dir: nsm, 
+      target: 'networkHosts', 
+      status: present, 
+      conf: [nsm/docker-compose-ansible.yml], 
+      env: nsm/.env
+    }
+  - { 
+      name: purpleids, 
+      dir: purpleids, 
+      target: 'analysisHosts', 
+      status: present, 
+      conf: [purpleids/docker-compose-ansible.yml], 
+      env: purpleids/.env
+    }
+  - { 
+      name: services, 
+      dir: docker-bundles/services, 
+      status: present,
+      target: 'serviceHosts', 
+      conf: [docker-bundles/services/docker-compose-ansible.yml], 
+      env: docker-bundles/services/.env
+    }
 ```
-Edit logs sources for analyzers to read accordingly (currently only Crowdsec):
+Mark some volumes as logs sources for security purposes. This is still broken so don't count on it yet:
 ```
 $ ./purplesec logs
 ```
@@ -85,6 +118,11 @@ Push configuration (will setup everything, including NFS backend and all compose
 ```
 $ ./purplesec push {volumes | compose}
 ```
+
+# Cool features
+* Security bundle exposes a Zed data lake to perform threat hunting on network logs;
+* You can import your own dockerized projects and manage them from a unified platform;
+* Volume declarations are parsed directly from your compose files, and a new file for transparently overriding those declarations is generated every time. This makes sure your volumes turn multi-host;
 
 # Managing internal networks
 Below you can find some additional tips to tailor your specific setup.
@@ -96,24 +134,9 @@ In *docker/purpleids/rita/config.yaml*:
 In *docker/nsm/zeek*:
  * Check zeek docs if you need to change the default list of networks to be considered as internal.
 
-# Some tips and observations
-The current setup includes the 9xeb/purpleids, 9xeb/nsm and 9xeb/netpot compose configurations.
-Additionally, 9xeb/sigmalert is present but will not be used.
-
-__Though this project was meant for security purposes, it is rapidly becoming a generic orchestrator for multi host docker with multi host volumes. Since multi host volumes cannot be configured easily in docker and docker swarm, you might want to pull this repo and use it as a launchpad for your distributed docker-based applications.__
-
-Hence, if you wish, you can add your own compose folder in ./docker, then edit your multi host volumes with:
-```
-$ ./purplesec volume edit
-```
-and add a reference to your project to the *requested_stacks* variable:
-```
-$ ./purplesec vars
-```
-
 # Future additions
 - Attack surface recon, automated red teaming with toolchains, from org name to vulnerabilities, through asset discovery and OSINT;
-- Remote security assessments via ssh.
-- Docker image to tail -F log files from local filesystem to remote volume (basically a replacement for filebeat)
-
-
+- Remote security assessments via ssh;
+- Docker image to tail -F log files from local filesystem to remote volume (basically a replacement for filebeat);
+- Support for Docker Swarm;
+- High availability NFS in storage hosts.
