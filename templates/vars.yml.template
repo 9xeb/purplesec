@@ -17,10 +17,10 @@ ssh_tunneling_local_port: 12345
 # conf -> which compose files, relative to ./docker, you want to run for the stack
 # env -> one env file to load, relative to ./docker
 stacks:
-  - { dir: nsm, target: 'networkHosts', status: present, conf: [docker-compose-ansible.yml, nsm/docker-compose-ansible.yml], env: nsm/.env, backup: no, swarm: no }
-  - { dir: purpleids, target: 'analysisHosts', status: present, conf: [docker-compose-ansible.yml, purpleids/docker-compose-ansible.yml], env: purpleids/.env, backup: no, swarm: yes }
-  - { dir: dvwa, target: 'analysisHosts', status: present, conf: [docker-compose-ansible.yml, dvwa/docker-compose-ansible.yml], env: dvwa/.env, backup: no, swarm: yes }
-  - { dir: docker-bundles/services, target: 'storageHosts', conf: [docker-compose-ansible.yml, docker-bundles/services/docker-compose-ansible.yml], env: docker-bundles/services/.env, backup: no, swarm: yes }
+  - { name: nsm, dir: nsm, target: 'networkHosts', status: present, conf: [docker-compose.volumes.nsm.yml, nsm/docker-compose-ansible.yml], env: nsm/.env, backup: no, swarm: no }
+  - { name: purpleids, dir: purpleids, target: 'analysisHosts', status: present, conf: [docker-compose.volumes.purpleids.yml, purpleids/docker-compose-ansible.yml], env: purpleids/.env, backup: no, swarm: yes }
+#  - { name: dvwa, dir: dvwa, target: 'analysisHosts', status: present, conf: [docker-compose.volumes.dvwa.yml, dvwa/docker-compose-ansible.yml], env: dvwa/.env, backup: no, swarm: yes }
+#  - { name: services, dir: docker-bundles/services, target: 'storageHosts', conf: [docker-compose.volumes.services.yml, docker-bundles/services/docker-compose-ansible.yml], env: docker-bundles/services/.env, backup: no, swarm: yes }
 
 requested_backups:
 #  - { repo_password: "{{ vault_backup_password_0 }}", source_directories: ['/path/to/one', '/path/to/two'], target: 'dockerHosts' }

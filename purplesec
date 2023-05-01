@@ -87,8 +87,34 @@ EOF
   cp templates/vars.yml.template ansible/vars/main.yml && \
   echo "docker_volumes:" >> ansible/vars/main.yml
   #crowdsec_mountlist=""
-  for volume in $(cat ${MAIN_JSON} | jq '.volumes[]' | cut -d'"' -f 2); do
-    cat >> docker/docker-compose-ansible.yml<< EOF
+#  for volume in $(cat ${MAIN_JSON} | jq '.volumes[]' | cut -d'"' -f 2); do
+#    cat >> docker/docker-compose-ansible.yml<< EOF
+#  ${volume}:
+#    driver: local
+#    driver_opts:
+#      type: nfs4
+#      o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
+#      device: ":/srv/swarm/docker/volumes/${volume}"
+#EOF
+#    cat >> ansible/vars/main.yml<< EOF
+#  - ${volume}
+#EOF
+#  done
+  all_volumes=""
+  PATH=$PATH:$GOPATH:~/go/bin
+  for stack in $(yq '.stacks[].name' templates/vars.yml.template);
+  do
+    rm docker/docker-compose.volumes.${stack}.yml && touch docker/docker-compose.volumes.${stack}.yml
+    cat >> docker/docker-compose.volumes.${stack}.yml << EOF
+version: '2.2'
+# Volumes only
+volumes:
+EOF
+    for conf in $(yq '.stacks[] | select(.name=="'${stack}'") | .conf[]' templates/vars.yml.template);
+    do
+      for volume in $(yq '.volumes | keys' docker/${conf} 2>/dev/null | cut -d'-' -f2- | xargs);
+      do
+        cat >> docker/docker-compose.volumes.${stack}.yml<< EOF
   ${volume}:
     driver: local
     driver_opts:
@@ -96,6 +122,15 @@ EOF
       o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
       device: ":/srv/swarm/docker/volumes/${volume}"
 EOF
+        all_volumes=${all_volumes}' '${volume}
+      done
+      echo "[!] "${conf}
+    done
+  done
+  #echo "[vols] "$all_volumes | tr ' ' $'\n'
+  for volume in $(echo ${all_volumes} | tr ' ' $'\n' | sort | uniq);
+  do
+    #echo "[AAAAA] "${volume}
     cat >> ansible/vars/main.yml<< EOF
   - ${volume}
 EOF
@@ -133,8 +168,9 @@ EOF
   # add default database volume (soon this will disappear in favor of postgres)
   crowdsec_mountlist=${crowdsec_mountlist}'"crowdsec-database:/var/lib/crowdsec/data/",'
   #echo ${crowdsec_mountlist}
-  PATH=$PATH:$GOPATH:~/go/bin
-  cp docker/purpleids/docker-compose-ansible-base.yml docker/purpleids/docker-compose-ansible.yml && \
+  echo "[crowdsec_mountlist] "${crowdsec_mountlist::-1}
+  #for stack in $(yq '.volumes | keys' docker/nsm/docker-compose-ansible.yml | cut -d'-' -f 2- | xargs)
+  #cp docker/purpleids/docker-compose-ansible-base.yml docker/purpleids/docker-compose-ansible.yml && \
   yq -i '.services.crowdsec.volumes = ['${crowdsec_mountlist::-1}']' docker/purpleids/docker-compose-ansible.yml
 }
 
@@ -146,10 +182,10 @@ case $1 in
   push)
     setup_helper && \
     refresh_volumes && \
-    refresh_logs && \
-    echo "[*] Clearing stale ssh pubkeys" && \
-    rm -rf ansible/.ssh/*.pub && \
-    ansible-playbook -vv -i ansible/.inventory -b ansible/${2}.yml -e@ansible/.vault --ask-vault-pass
+    #refresh_logs && \
+    #echo "[*] Clearing stale ssh pubkeys" && \
+    #rm -rf ansible/.ssh/*.pub && \
+    ansible-playbook -v -i ansible/.inventory -b ansible/${2}.yml -e@ansible/.vault --ask-vault-pass
     #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
     ;;
   stats)
