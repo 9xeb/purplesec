@@ -3,6 +3,7 @@
 MAIN_JSON=.purplesec
 CROWDSEC_ACQUIS_FILE=docker/purpleids/crowdsec/acquis.yaml
 
+
 function setup_helper {
 # link project files to 9xeb.push-compose ansible role
 echo "[*] Linking your ./docker to ansible roles that require it"
@@ -78,12 +79,12 @@ esac
 #  - volumes definitions in a docker compose file
 #  - ansible variables referring to volumes for NFS servers
 function refresh_volumes {
-  mv docker/docker-compose-ansible.yml docker/docker-compose-ansible.yml.old && \
-  cat >> docker/docker-compose-ansible.yml << EOF
-version: '2.2'
-# Volumes only
-volumes:
-EOF
+#   mv docker/docker-compose-ansible.yml docker/docker-compose-ansible.yml.old && \
+#   cat >> docker/docker-compose-ansible.yml << EOF
+# version: '2.2'
+# # Volumes only
+# volumes:
+# EOF
   cp templates/vars.yml.template ansible/vars/main.yml && \
   echo "docker_volumes:" >> ansible/vars/main.yml
   #crowdsec_mountlist=""
@@ -102,16 +103,17 @@ EOF
 #  done
   all_volumes=""
   PATH=$PATH:$GOPATH:~/go/bin
-  for stack in $(yq '.stacks[].name' templates/vars.yml.template);
+  for stack in $(yq '.'${STACK_NAME}'[].name' templates/vars.yml.template);
   do
     rm docker/docker-compose.volumes.${stack}.yml && touch docker/docker-compose.volumes.${stack}.yml
     cat >> docker/docker-compose.volumes.${stack}.yml << EOF
-version: '2.2'
+version: '${COMPOSE_VERSION}'
 # Volumes only
 volumes:
 EOF
-    for conf in $(yq '.stacks[] | select(.name=="'${stack}'") | .conf[]' templates/vars.yml.template);
+    for conf in $(yq '.'${STACK_NAME}'[] | select(.name=="'${stack}'") | .conf[]' templates/vars.yml.template);
     do
+      echo "[conf] "${conf}
       for volume in $(yq '.volumes | keys' docker/${conf} 2>/dev/null | cut -d'-' -f2- | xargs);
       do
         cat >> docker/docker-compose.volumes.${stack}.yml<< EOF
@@ -124,13 +126,13 @@ EOF
 EOF
         all_volumes=${all_volumes}' '${volume}
       done
-      echo "[!] "${conf}
     done
   done
   #echo "[vols] "$all_volumes | tr ' ' $'\n'
+  #echo "[vols] "${all_volumes}
   for volume in $(echo ${all_volumes} | tr ' ' $'\n' | sort | uniq);
   do
-    #echo "[AAAAA] "${volume}
+    echo "[vol] "${volume}
     cat >> ansible/vars/main.yml<< EOF
   - ${volume}
 EOF
@@ -180,12 +182,30 @@ case $1 in
     #volumes_helper "${@:2}"
     ;;
   push)
+    #read -p "Enter environment (swarm or compose): " ENVIRONMENT
+    case $2 in
+    swarm)
+    COMPOSE_VERSION=3.2
+    STACK_NAME=swarm_stacks
+    PLAYBOOK_NAME=push-stack
+    ;;
+    compose)
+    COMPOSE_VERSION=2.2
+    STACK_NAME=manual_stacks
+    PLAYBOOK_NAME=push-compose
+    ;;
+    *)
+    echo "[!] Unsupported environment '"$2"'"
+    exit 1
+    ;;
+    esac
+
     setup_helper && \
     refresh_volumes && \
     #refresh_logs && \
     #echo "[*] Clearing stale ssh pubkeys" && \
     #rm -rf ansible/.ssh/*.pub && \
-    ansible-playbook -v -i ansible/.inventory -b ansible/${2}.yml -e@ansible/.vault --ask-vault-pass
+    ansible-playbook -v -i ansible/.inventory -b ansible/${PLAYBOOK_NAME}.yml -e@ansible/.vault --ask-vault-pass
     #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
     ;;
   stats)
@@ -210,7 +230,7 @@ case $1 in
     # auto add volume to crowdsec service in compose
     ;;
   *)
-    echo "[*] Unknown argument "${1}
+    echo "[*] Unsupported operation '"${1}"'"
     exit 1
     ;;
 esac
