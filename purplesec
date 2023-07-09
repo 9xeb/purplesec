@@ -185,7 +185,7 @@ case $1 in
     #read -p "Enter environment (swarm or compose): " ENVIRONMENT
     case $2 in
     swarm)
-    COMPOSE_VERSION=3.2
+    COMPOSE_VERSION=3.3
     STACK_NAME=swarm_stacks
     PLAYBOOK_NAME=push-stack
     ;;
