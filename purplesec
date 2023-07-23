@@ -215,7 +215,7 @@ case $1 in
     ;;
   ips)
     nano docker/docker-bundles/services/crowdsec-swarm.yml;
-    ./purplesec vars
+    EDITOR=nano ./purplesec vault edit
     ;;
   stats)
     echo "[!] Not implemented yet"
