@@ -217,6 +217,10 @@ case $1 in
     nano docker/docker-bundles/services/crowdsec-swarm.yml;
     EDITOR=nano ./purplesec vault edit
     ;;
+  frontend)
+    nano docker/docker-bundles/services/nginx-proxy-manager-swarm.yml;
+    nano docker/docker-bundles/services/nginx-proxy-manager/resolv.conf;
+    ;;
   stats)
     echo "[!] Not implemented yet"
     ;;
