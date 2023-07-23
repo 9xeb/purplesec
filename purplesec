@@ -7,10 +7,12 @@ CROWDSEC_ACQUIS_FILE=docker/purpleids/crowdsec/acquis.yaml
 function setup_helper {
 # link project files to 9xeb.push-compose ansible role
 echo "[*] Linking your ./docker to ansible roles that require it"
-unlink ansible/roles/9xeb.push-compose/files && \
+unlink ansible/roles/9xeb.push-compose/files;
 ln -s ../../../docker ansible/roles/9xeb.push-compose/files
+unlink ansible/roles/9xeb.push-compose/templates;
+ln -s ../../../docker ansible/roles/9xeb.push-compose/templates
 
-unlink ansible/roles/9xeb.push-volumes/files && \
+unlink ansible/roles/9xeb.push-volumes/files;
 ln -s ../../../docker ansible/roles/9xeb.push-volumes/files
 #echo "[*] Done"
 
@@ -183,16 +185,19 @@ case $1 in
     ;;
   push)
     #read -p "Enter environment (swarm or compose): " ENVIRONMENT
+    COMPOSE_VERSION=3.3
     case $2 in
     swarm)
-    COMPOSE_VERSION=3.3
     STACK_NAME=swarm_stacks
     PLAYBOOK_NAME=push-stack
     ;;
     compose)
-    COMPOSE_VERSION=2.2
     STACK_NAME=manual_stacks
     PLAYBOOK_NAME=push-compose
+    ;;
+    ips)
+    STACK_NAME=swarm_stacks
+    PLAYBOOK_NAME=push-ips
     ;;
     *)
     echo "[!] Unsupported environment '"$2"'"
@@ -205,8 +210,12 @@ case $1 in
     #refresh_logs && \
     #echo "[*] Clearing stale ssh pubkeys" && \
     #rm -rf ansible/.ssh/*.pub && \
-    ansible-playbook -v -i ansible/.inventory -b ansible/${PLAYBOOK_NAME}.yml -e@ansible/.vault --ask-vault-pass
+    ansible-playbook -vv -i ansible/.inventory -b ansible/${PLAYBOOK_NAME}.yml -e@ansible/.vault --ask-vault-pass
     #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
+    ;;
+  ips)
+    nano docker/docker-bundles/services/crowdsec-swarm.yml;
+    ./purplesec vars
     ;;
   stats)
     echo "[!] Not implemented yet"
@@ -230,7 +239,9 @@ case $1 in
     # auto add volume to crowdsec service in compose
     ;;
   *)
-    echo "[*] Unsupported operation '"${1}"'"
+    echo "[*] Falling back to playbook name as input"
+    cp templates/vars.yml.template ansible/vars/main.yml && \
+    ansible-playbook -v -i ansible/.inventory -b ansible/${1}.yml -e@ansible/.vault --ask-vault-pass
     exit 1
     ;;
 esac
