@@ -87,8 +87,7 @@ function refresh_volumes {
 # # Volumes only
 # volumes:
 # EOF
-  cp templates/vars.yml.template ansible/vars/main.yml && \
-  echo "docker_volumes:" >> ansible/vars/main.yml
+  cp templates/vars.yml.template ansible/vars/main.yml
   #crowdsec_mountlist=""
 #  for volume in $(cat ${MAIN_JSON} | jq '.volumes[]' | cut -d'"' -f 2); do
 #    cat >> docker/docker-compose-ansible.yml<< EOF
@@ -103,10 +102,12 @@ function refresh_volumes {
 #  - ${volume}
 #EOF
 #  done
-  all_volumes=""
+  
   PATH=$PATH:$GOPATH:~/go/bin
+  all_volumes=""
   for stack in $(yq '.'${STACK_NAME}'[].name' templates/vars.yml.template);
   do
+    stack_volumes=""
     rm docker/docker-compose.volumes.${stack}.yml && touch docker/docker-compose.volumes.${stack}.yml
     cat >> docker/docker-compose.volumes.${stack}.yml << EOF
 version: '${COMPOSE_VERSION}'
@@ -126,19 +127,37 @@ EOF
       o: addr=127.0.0.1,proto=tcp,port=12345,nosuid,noexec,nodev,rw
       device: ":/srv/swarm/docker/volumes/${volume}"
 EOF
+        stack_volumes=${stack_volumes}' '${volume}
         all_volumes=${all_volumes}' '${volume}
       done
     done
+
+    if [[ ${stack_volumes} = "" ]]
+    then 
+      echo "[*] No volumes found for stack: "${stack}
+      echo "version: '"${COMPOSE_VERSION}"'" > docker/docker-compose.volumes.${stack}.yml
+    fi
   done
-  #echo "[vols] "$all_volumes | tr ' ' $'\n'
-  #echo "[vols] "${all_volumes}
-  for volume in $(echo ${all_volumes} | tr ' ' $'\n' | sort | uniq);
-  do
+
+  if [[ ${all_volumes} = "" ]]
+  then
+    echo "[*] No volumes found anywhere!"
+  else
+    echo "docker_volumes:" >> ansible/vars/main.yml
+    for volume in $(echo ${all_volumes} | tr ' ' $'\n' | sort | uniq);
+    do
     echo "[vol] "${volume}
     cat >> ansible/vars/main.yml<< EOF
   - ${volume}
 EOF
-  done
+    done
+  fi
+
+
+  #echo "[vols] "$stack_volumes | tr ' ' $'\n'
+  #echo "[vols] "${stack_volumes} && \
+
+  #echo "[all volumes] "${stack_volumes}"---"
 }
 
 # Update resources that refer to logs:
@@ -183,6 +202,7 @@ case $1 in
     nano ${MAIN_JSON}
     #volumes_helper "${@:2}"
     ;;
+
   push)
     #read -p "Enter environment (swarm or compose): " ENVIRONMENT
     COMPOSE_VERSION=3.3
@@ -195,9 +215,12 @@ case $1 in
     STACK_NAME=manual_stacks
     PLAYBOOK_NAME=push-compose
     ;;
-    ips)
-    STACK_NAME=swarm_stacks
-    PLAYBOOK_NAME=push-ips
+    security)
+    STACK_NAME=swarm_infra_stacks
+    PLAYBOOK_NAME=push-security
+    ;;
+    cluster)
+    PLAYBOOK_NAME=fix-cluster
     ;;
     *)
     echo "[!] Unsupported environment '"$2"'"
@@ -213,7 +236,7 @@ case $1 in
     ansible-playbook -vv -i ansible/.inventory -b ansible/${PLAYBOOK_NAME}.yml -e@ansible/.vault --ask-vault-pass
     #ansible-playbook -vv -i ansible/.inventory -b ansible/push-compose.yml -e@ansible/.vault --ask-vault-pass
     ;;
-  ips)
+  crowdsec)
     nano docker/docker-bundles/services/crowdsec-swarm.yml;
     EDITOR=nano ./purplesec vault edit
     ;;
