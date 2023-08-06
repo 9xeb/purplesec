@@ -12,6 +12,9 @@ ln -s ../../../docker ansible/roles/9xeb.push-compose/files
 unlink ansible/roles/9xeb.push-compose/templates;
 ln -s ../../../docker ansible/roles/9xeb.push-compose/templates
 
+unlink ansible/roles/9xeb.push-images/files;
+ln -s ../../../docker ansible/roles/9xeb.push-images/files
+
 unlink ansible/roles/9xeb.push-volumes/files;
 ln -s ../../../docker ansible/roles/9xeb.push-volumes/files
 #echo "[*] Done"
@@ -207,6 +210,9 @@ case $1 in
     #read -p "Enter environment (swarm or compose): " ENVIRONMENT
     COMPOSE_VERSION=3.3
     case $2 in
+    images)
+    PLAYBOOK_NAME=push-images
+    ;;
     swarm)
     STACK_NAME=swarm_stacks
     PLAYBOOK_NAME=push-stack
