@@ -1,25 +1,25 @@
+# at least one arm64 and one amd64 to build images
+[buildHosts]
+# hosts that build and push images
+
+[isolatedDockerHosts]
+# isolated docker hosts are special docker hosts where the docker daemon runs in an isolated network namespace
+# necessary in some cloud environments where we have no control over the network firewall
+
+[swarmManagers]
+# swarm managers here
+
+[swarmWorkers]
+# swarm workers here
+
 [storageServers]
+# Should be one. Only the first entry will be taken into account
 # Currently only works with one. Multiple storage servers support will happen soon.
-storage.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
-
-
-[networkHosts]
-# Currently only works with one. Multiple sniffing hosts support will happen soon.
-nsm.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
-
-[analysisHosts]
-# Currently only works with one. Distributed analysis support will happen soon.
-purpleids.example.com ansible_user=USER ansible_become_pass='{{ SOMEVAR }}'
-
-[servicesHosts]
-# Place your other docker hosts here, or create your own group. What actually matters is the requested_stacks variable.
 
 [backupHosts]
-# Currently only works with one. If more are set the last will override the others in client's configurations. This means clients will only backup to the last declared backup host.
+# backup hosts via borg here
 
 [dockerHosts:children]
-# Leave these as they are unless you know what you are doing
-networkHosts
-analysisHosts
-storageServers
-
+swarmManagers
+swarmWorkers
+isolatedDockerHosts
