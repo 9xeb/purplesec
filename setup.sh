@@ -7,3 +7,6 @@ wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O 
 apt update && apt install nano jq ansible
 
 ansible-galaxy collection install ansible.posix
+
+# check imported roles
+ansible-galaxy install -r ansible/requirements.yml --roles-path ansible/roles
